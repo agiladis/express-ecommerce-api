@@ -1,26 +1,21 @@
-require('dotenv').config();
+require('./middlewares/responseTemplate');
 
 const express = require('express');
-const { Sequelize } = require('sequelize');
-const dbConfig = require('./config/database');
-
 const app = express();
+const authRoutes = require('./routes/authRoutes');
+const responseTemplate = require('./middlewares/responseTemplate');
 
-const PORT = process.env.PORT;
+// to know how body request type
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
-// connect to db
-const sequelize = new Sequelize(dbConfig.development);
+// use middleware
+app.use(responseTemplate);
 
-// test connection
-sequelize
-  .authenticate()
-  .then(() => {
-    console.log('Connection has been established successfully.');
-  })
-  .catch((err) => {
-    console.error('Unable to connect to the database: ', err);
-  });
-
-app.listen(PORT, () => {
-  console.log(`Server listening on port ${PORT}`);
+// API Routes
+app.use('/api/v1/auth', authRoutes);
+app.get('/', (req, res) => {
+  res.send('Hello world');
 });
+
+module.exports = app;
