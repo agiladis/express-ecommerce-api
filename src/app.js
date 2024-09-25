@@ -1,9 +1,8 @@
-require('./middlewares/responseTemplate');
-
 const express = require('express');
 const app = express();
 const authRoutes = require('./routes/authRoutes');
 const responseTemplate = require('./middlewares/responseTemplate');
+require('./middlewares/responseTemplate');
 
 // to know how body request type
 app.use(express.json());
