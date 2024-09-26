@@ -26,7 +26,6 @@ const getAll = async (req, res) => {
         where: { name: category },
       });
       if (categoryInstance) where.categoryId = categoryInstance.id;
-      //   include.push({ model: Category, where: { id: categoryInstance.id } });
     }
 
     const products = await Product.findAll({
@@ -35,7 +34,7 @@ const getAll = async (req, res) => {
       order: [[sort, order.toUpperCase()]],
       offset,
       limit,
-      attributes: ['name', 'price'],
+      attributes: ['id', 'name', 'price'],
     });
 
     res.success(200, products, 'Get all products success');
@@ -59,7 +58,7 @@ const getById = async (req, res) => {
         model: Category,
         attributes: ['name'],
       },
-      attributes: ['name', 'price', 'description', 'stock'],
+      attributes: ['id', 'name', 'price', 'description', 'stock'],
     });
     if (!product) return res.error(404, 'product was not found');
 
