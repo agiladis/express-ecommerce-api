@@ -44,4 +44,29 @@ const getAll = async (req, res) => {
   }
 };
 
-module.exports = { getAll };
+const getById = async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    if (isNaN(Number(id))) return res.error(422, 'params must be number');
+
+    const product = await Product.findOne({
+      where: {
+        id,
+        stock: { [Op.gt]: 0 },
+      },
+      include: {
+        model: Category,
+        attributes: ['name'],
+      },
+      attributes: ['name', 'price', 'description', 'stock'],
+    });
+    if (!product) return res.error(404, 'product was not found');
+
+    res.success(200, product);
+  } catch (error) {
+    res.error(500, error.message, 'internal server error');
+  }
+};
+
+module.exports = { getAll, getById };
