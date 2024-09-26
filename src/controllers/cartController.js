@@ -46,4 +46,24 @@ const getAllFromCart = async (req, res) => {
   }
 };
 
-module.exports = { addToCart, getAllFromCart };
+const updateCartProduct = async (req, res) => {
+  const { productId } = req.params;
+  const userId = req.user.id;
+  const updates = req.body;
+
+  try {
+    const cartProduct = await Cart.findOne({ where: { userId, productId } });
+    if (!cartProduct) return res.error(404, 'cart product not found');
+
+    Object.keys(updates).forEach((key) => {
+      cartProduct[key] = updates[key];
+    });
+
+    await cartProduct.save();
+    res.success(200, cartProduct, 'Update cart product success');
+  } catch (error) {
+    res.error(500, error.message, 'internal server error');
+  }
+};
+
+module.exports = { addToCart, getAllFromCart, updateCartProduct };
