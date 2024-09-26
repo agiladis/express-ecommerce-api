@@ -1,6 +1,7 @@
 const express = require('express');
 const app = express();
 const authRoutes = require('./routes/authRoutes');
+const productRoutes = require('./routes/productRoutes');
 const responseTemplate = require('./middlewares/responseTemplate');
 const authMiddleware = require('./middlewares/authMiddleware');
 require('./middlewares/responseTemplate');
@@ -9,13 +10,11 @@ require('./middlewares/responseTemplate');
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// use middleware
+// use response template from middleware
 app.use(responseTemplate);
 
 // API Routes
 app.use('/api/v1/auth', authRoutes);
-app.get('/api/v1/protected', authMiddleware, (req, res) => {
-  res.send('Hello world');
-});
+app.use('/api/v1/products', authMiddleware, productRoutes);
 
 module.exports = app;
