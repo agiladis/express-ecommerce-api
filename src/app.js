@@ -5,6 +5,7 @@ const authMiddleware = require('./middlewares/authMiddleware');
 const authRoutes = require('./routes/authRoutes');
 const productRoutes = require('./routes/productRoutes');
 const cartRoutes = require('./routes/cartRoutes');
+const orderRoutes = require('./routes/orderRoutes');
 require('./middlewares/responseTemplate');
 
 // to know how body request type
@@ -18,5 +19,6 @@ app.use(responseTemplate);
 app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1/products', authMiddleware, productRoutes);
 app.use('/api/v1/carts', authMiddleware, cartRoutes);
+app.use('/api/v1/orders', authMiddleware, orderRoutes);
 
 module.exports = app;
