@@ -5,6 +5,52 @@ const Product = require('../entities/product');
 const Order = require('../entities/order');
 const OrderItem = require('../entities/orderItem');
 
+const getAllOrders = async (req, res) => {
+  const userId = req.user.id;
+
+  try {
+    const orders = await Order.findAndCountAll({
+      where: { userId },
+      limit: 10,
+      offset: 0,
+    });
+    if (!orders) return res.error(404, "You don't have any transactions yet");
+
+    res.success(200, orders, 'Get all transactions success');
+  } catch (error) {
+    res.error(500, error.message, 'internal server error');
+  }
+};
+
+const getOrderById = async (req, res) => {
+  const userId = req.user.id;
+  const { id } = req.params;
+
+  try {
+    if (isNaN(Number(id))) return res.error(422, 'params must be number');
+
+    const order = await Order.findOne({
+      where: {
+        id,
+        userId,
+      },
+      include: {
+        model: OrderItem,
+        attributes: ['id', 'productId', 'quantity'],
+        include: {
+          model: Product,
+          attributes: ['name', 'price'],
+        },
+      },
+    });
+    if (!order) return res.error(404, 'transaction not found');
+
+    res.success(200, order);
+  } catch (error) {
+    res.error(500, error.message, 'internal server error');
+  }
+};
+
 const createOrder = async (req, res) => {
   const userId = req.user.id;
   const items = req.body.items;
@@ -72,4 +118,4 @@ const createOrder = async (req, res) => {
   }
 };
 
-module.exports = { createOrder };
+module.exports = { getAllOrders, getOrderById, createOrder };
