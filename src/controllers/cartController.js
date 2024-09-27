@@ -1,3 +1,4 @@
+const { where } = require('sequelize');
 const Cart = require('../entities/cart');
 const Product = require('../entities/product');
 
@@ -26,7 +27,7 @@ const addToCart = async (req, res) => {
   }
 };
 
-const getAllFromCart = async (req, res) => {
+const getAllProductFromCart = async (req, res) => {
   const userId = req.user.id;
 
   try {
@@ -47,12 +48,11 @@ const getAllFromCart = async (req, res) => {
 };
 
 const updateCartProduct = async (req, res) => {
-  const { productId } = req.params;
-  const userId = req.user.id;
+  const { id } = req.params;
   const updates = req.body;
 
   try {
-    const cartProduct = await Cart.findOne({ where: { userId, productId } });
+    const cartProduct = await Cart.findByPk(id);
     if (!cartProduct) return res.error(404, 'cart product not found');
 
     Object.keys(updates).forEach((key) => {
@@ -66,4 +66,4 @@ const updateCartProduct = async (req, res) => {
   }
 };
 
-module.exports = { addToCart, getAllFromCart, updateCartProduct };
+module.exports = { addToCart, getAllProductFromCart, updateCartProduct };
