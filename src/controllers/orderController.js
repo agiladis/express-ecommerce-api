@@ -22,6 +22,35 @@ const getAllOrders = async (req, res) => {
   }
 };
 
+const getOrderById = async (req, res) => {
+  const userId = req.user.id;
+  const { id } = req.params;
+
+  try {
+    if (isNaN(Number(id))) return res.error(422, 'params must be number');
+
+    const order = await Order.findOne({
+      where: {
+        id,
+        userId,
+      },
+      include: {
+        model: OrderItem,
+        attributes: ['id', 'productId', 'quantity'],
+        include: {
+          model: Product,
+          attributes: ['name', 'price'],
+        },
+      },
+    });
+    if (!order) return res.error(404, 'transaction not found');
+
+    res.success(200, order);
+  } catch (error) {
+    res.error(500, error.message, 'internal server error');
+  }
+};
+
 const createOrder = async (req, res) => {
   const userId = req.user.id;
   const items = req.body.items;
@@ -89,4 +118,4 @@ const createOrder = async (req, res) => {
   }
 };
 
-module.exports = { getAllOrders, createOrder };
+module.exports = { getAllOrders, getOrderById, createOrder };
