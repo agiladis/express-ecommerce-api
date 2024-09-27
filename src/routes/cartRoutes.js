@@ -8,7 +8,7 @@ const {
 
 router.post('/', addToCart);
 router.get('/', getAllProductFromCart);
-router.put('/:productId', updateCartProduct);
-router.patch('/:productId', updateCartProduct);
+router.put('/:id', updateCartProduct);
+router.patch('/:id', updateCartProduct);
 
 module.exports = router;
