@@ -17,7 +17,7 @@ const authMiddleware = (req, res, next) => {
 
     next();
   } catch (error) {
-    res.error(401, 'unauthorized', 'Token is not valid');
+    res.error(500, error.message, 'internal server error');
   }
 };
 

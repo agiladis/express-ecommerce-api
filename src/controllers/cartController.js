@@ -48,13 +48,10 @@ const getAllProductFromCart = async (req, res) => {
 };
 
 const updateCartProduct = async (req, res) => {
-  const { id } = req.params;
   const updates = req.body;
+  const cartProduct = req.cart;
 
   try {
-    const cartProduct = await Cart.findByPk(id);
-    if (!cartProduct) return res.error(404, 'cart product not found');
-
     Object.keys(updates).forEach((key) => {
       cartProduct[key] = updates[key];
     });

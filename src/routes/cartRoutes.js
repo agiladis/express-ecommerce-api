@@ -5,10 +5,11 @@ const {
   getAllProductFromCart,
   updateCartProduct,
 } = require('../controllers/cartController');
+const validateCartOwnership = require('../middlewares/validateCartOwnership');
 
 router.post('/', addToCart);
 router.get('/', getAllProductFromCart);
-router.put('/:id', updateCartProduct);
-router.patch('/:id', updateCartProduct);
+router.put('/:id', validateCartOwnership, updateCartProduct);
+router.patch('/:id', validateCartOwnership, updateCartProduct);
 
 module.exports = router;
