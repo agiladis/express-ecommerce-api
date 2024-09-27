@@ -2,12 +2,12 @@ const express = require('express');
 const router = express.Router();
 const {
   addToCart,
-  getAllFromCart,
+  getAllProductFromCart,
   updateCartProduct,
 } = require('../controllers/cartController');
 
 router.post('/', addToCart);
-router.get('/', getAllFromCart);
+router.get('/', getAllProductFromCart);
 router.put('/:productId', updateCartProduct);
 router.patch('/:productId', updateCartProduct);
 
