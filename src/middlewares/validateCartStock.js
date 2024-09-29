@@ -7,9 +7,10 @@ const validateCartStock = async (req, res, next) => {
   try {
     const cartItems = await Cart.findAll({
       where: { userId },
-      include: { model: Product },
+      attributes: ['id', 'quantity'],
+      include: { model: Product, attributes: ['id', 'name', 'price'] },
     });
-    if (!cart) return res.error(404, 'Cart is empty');
+    if (!cartItems) return res.error(404, 'Cart is empty');
 
     const updatedCartItems = cartItems.map((item) => {
       if (!item.Product || item.Product.stock == 0) {
@@ -31,3 +32,5 @@ const validateCartStock = async (req, res, next) => {
     res.error(500, error.message, 'internal server error');
   }
 };
+
+module.exports = validateCartStock;
