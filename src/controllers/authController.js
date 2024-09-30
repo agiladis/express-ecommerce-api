@@ -60,19 +60,24 @@ const login = async (req, res) => {
 };
 
 const activateAccount = async (req, res) => {
-  const token = req.params;
+  const { token } = req.params;
 
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET_KEY);
     const user = await User.findByPk(decoded.id);
-    if (!user) {
-      return res.error(400, 'bad request', 'Invalid activation link');
+    if (!user) return res.error(400, 'bad request', 'Invalid activation link');
+    if (user.isVerified) {
+      return res.error(
+        400,
+        'bad request',
+        'Your account has been previously activated'
+      );
     }
 
     user.isVerified = true;
     await user.save();
 
-    res.success(200, user, 'Account activated successfully.');
+    res.success(200, null, 'Account activated successfully.');
   } catch (error) {
     res.error(500, error.message, 'Internal server error');
   }
@@ -94,4 +99,4 @@ const sendActivationEmail = async (email, activationLink) => {
   await transporter.sendMail(mailOptions);
 };
 
-module.exports = { register, login };
+module.exports = { register, login, activateAccount };
