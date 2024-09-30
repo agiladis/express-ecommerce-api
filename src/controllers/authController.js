@@ -31,7 +31,7 @@ const register = async (req, res) => {
 
     res.success(201, newUser, 'User registered successfully');
   } catch (error) {
-    res.error(400, error.message, 'Error registering user');
+    res.error(500, error.message, 'Internal server error');
   }
 };
 
@@ -54,6 +54,25 @@ const login = async (req, res) => {
     );
 
     res.success(200, token, 'User logged in success');
+  } catch (error) {
+    res.error(500, error.message, 'Internal server error');
+  }
+};
+
+const activateAccount = async (req, res) => {
+  const token = req.params;
+
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET_KEY);
+    const user = await User.findByPk(decoded.id);
+    if (!user) {
+      return res.error(400, 'bad request', 'Invalid activation link');
+    }
+
+    user.isVerified = true;
+    await user.save();
+
+    res.success(200, user, 'Account activated successfully.');
   } catch (error) {
     res.error(500, error.message, 'Internal server error');
   }
