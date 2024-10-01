@@ -7,6 +7,10 @@ const Product = sequelize.define('Product', {
     type: DataTypes.STRING,
     allowNull: false,
   },
+  imageUrl: {
+    type: DataTypes.TEXT,
+    allowNull: false,
+  },
   description: {
     type: DataTypes.TEXT,
     allowNull: false,
@@ -17,6 +21,11 @@ const Product = sequelize.define('Product', {
   },
   stock: {
     type: DataTypes.INTEGER,
+    allowNull: false,
+  },
+  isAvail: {
+    type: DataTypes.BOOLEAN,
+    defaultValue: true,
     allowNull: false,
   },
 });
