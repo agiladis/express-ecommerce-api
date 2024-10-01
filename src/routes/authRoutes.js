@@ -5,8 +5,9 @@ const {
   login,
   activateAccount,
 } = require('../controllers/authController');
+const validateRegister = require('../middlewares/validateRegister');
 
-router.post('/signup', register);
+router.post('/signup', validateRegister, register);
 router.post('/login', login);
 router.get('/activate/:token', activateAccount);
 
