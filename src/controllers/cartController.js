@@ -1,3 +1,4 @@
+const { where } = require('sequelize');
 const Cart = require('../entities/cart');
 const Product = require('../entities/product');
 
@@ -26,35 +27,31 @@ const addToCart = async (req, res) => {
   }
 };
 
-const getAllFromCart = async (req, res) => {
-  const userId = req.user.id;
+const getAllProductFromCart = async (req, res) => {
+  // const userId = req.user.id;
 
   try {
-    const cartProducts = await Cart.findAll({
-      where: { userId },
-      include: {
-        model: Product,
-        attributes: ['id', 'name', 'price'],
-      },
-      attributes: ['quantity'],
-    });
-    if (!cartProducts) return res.error(404, 'Cart is empty');
+    // const cartProducts = await Cart.findAll({
+    //   where: { userId },
+    //   include: {
+    //     model: Product,
+    //     attributes: ['id', 'name', 'price'],
+    //   },
+    //   attributes: ['quantity'],
+    // });
+    // if (!cartProducts) return res.error(404, 'Cart is empty');
 
-    res.success(200, cartProducts, 'Get all products from cart success');
+    res.success(200, req.cartItems, 'Get all products from cart success');
   } catch (error) {
     res.error(500, error.message, 'internal server error');
   }
 };
 
 const updateCartProduct = async (req, res) => {
-  const { productId } = req.params;
-  const userId = req.user.id;
   const updates = req.body;
+  const cartProduct = req.cart;
 
   try {
-    const cartProduct = await Cart.findOne({ where: { userId, productId } });
-    if (!cartProduct) return res.error(404, 'cart product not found');
-
     Object.keys(updates).forEach((key) => {
       cartProduct[key] = updates[key];
     });
@@ -66,4 +63,4 @@ const updateCartProduct = async (req, res) => {
   }
 };
 
-module.exports = { addToCart, getAllFromCart, updateCartProduct };
+module.exports = { addToCart, getAllProductFromCart, updateCartProduct };
