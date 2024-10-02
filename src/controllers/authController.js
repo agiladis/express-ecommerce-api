@@ -29,7 +29,7 @@ const register = async (req, res) => {
     )}/api/v1/auth/activate/${activationToken}`;
     await sendActivationEmail(newUser.email, activationLink);
 
-    res.success(201, newUser, 'User registered successfully');
+    res.success(201, { email }, 'User registered successfully');
   } catch (error) {
     res.error(500, error.message, 'Internal server error');
   }
