@@ -75,6 +75,9 @@ const activateAccount = async (req, res) => {
 
     res.success(204, null, 'Account activated successfully.');
   } catch (error) {
+    if (error.name === 'TokenExpiredError') {
+      return res.error(400, error.message, 'Expired token');
+    }
     res.error(500, error.message, 'Internal server error');
   }
 };
@@ -83,7 +86,7 @@ const resendActivationToken = async (req, res) => {
   const { email } = req.body;
 
   try {
-    const user = User.findOne({ where: { email } });
+    const user = await User.findOne({ where: { email } });
 
     if (!user)
       return res.error(404, 'bad request', 'Email address is not registered');
@@ -98,7 +101,8 @@ const resendActivationToken = async (req, res) => {
     const activationLink = `${req.protocol}://${req.get(
       'host'
     )}/api/v1/auth/activate/${activationToken}`;
-    await sendActivationEmail(newUser.email, activationLink);
+    console.log(`------ user : ${user.email}`);
+    await sendActivationEmail(user.email, activationLink);
 
     res.success(204, null, 'Activation token resent');
   } catch (error) {
