@@ -8,12 +8,11 @@ const fs = require('fs');
 const path = require('path');
 
 const register = async (req, res) => {
-  const { fullName, email, password } = req.body;
+  const { email, password } = req.body;
 
   try {
     const hashedPassword = await bcrypt.hash(password, 10);
     const newUser = await User.create({
-      fullName,
       email,
       password: hashedPassword,
     });
@@ -47,7 +46,7 @@ const login = async (req, res) => {
 
     const token = createToken({ id: user.id, email: email });
 
-    res.success(200, token, 'User logged in success');
+    res.success(200, { token }, 'User logged in success');
   } catch (error) {
     res.error(500, error.message, 'Internal server error');
   }
