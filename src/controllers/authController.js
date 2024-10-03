@@ -46,7 +46,7 @@ const login = async (req, res) => {
 
     const token = createToken({ id: user.id, email: email });
 
-    res.success(200, token, 'User logged in success');
+    res.success(200, { token }, 'User logged in success');
   } catch (error) {
     res.error(500, error.message, 'Internal server error');
   }
