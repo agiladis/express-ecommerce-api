@@ -6,7 +6,7 @@ const {
   activateAccount,
   resendActivationToken,
 } = require('../controllers/authController');
-const validateRegister = require('../middlewares/validateRegister');
+const validateRegister = require('../middlewares/validateEmailPass');
 
 router.post('/signup', validateRegister, register);
 router.post('/login', login);

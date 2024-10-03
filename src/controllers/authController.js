@@ -8,12 +8,11 @@ const fs = require('fs');
 const path = require('path');
 
 const register = async (req, res) => {
-  const { fullName, email, password } = req.body;
+  const { email, password } = req.body;
 
   try {
     const hashedPassword = await bcrypt.hash(password, 10);
     const newUser = await User.create({
-      fullName,
       email,
       password: hashedPassword,
     });

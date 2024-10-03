@@ -1,6 +1,6 @@
 const { body, validationResult } = require('express-validator');
 
-const validateRegister = [
+const validateEmailPass = [
   body('email').isEmail().withMessage('Email must be valid'),
   body('password')
     .isLength({ min: 4 })
@@ -15,4 +15,4 @@ const validateRegister = [
   },
 ];
 
-module.exports = validateRegister;
+module.exports = validateEmailPass;
