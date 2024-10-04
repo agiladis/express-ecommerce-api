@@ -7,7 +7,7 @@ const PORT = process.env.PORT || 3000;
 require('./entities/associations');
 
 sequelize
-  .sync({ force: false, alter: true })
+  .sync({ force: false, alter: false })
   .then(() => {
     console.log('Connection to database has been established successfully');
     app.listen(PORT, () => {

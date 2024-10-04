@@ -4,16 +4,19 @@ const Category = require('../entities/category');
 
 const getAll = async (req, res) => {
   try {
-    const {
-      page = 1,
-      size = 5,
-      sort = 'createdAt',
-      order = 'DESC',
-      search = '',
-      category = '',
-    } = req.query;
-    const limit = parseInt(size);
+    const page = parseInt(req.query.page) || 1;
+    const size = parseInt(req.query.size) || 5;
+    const sort = req.query.sort || 'createdAt';
+    const order = req.query.order ? req.query.order.toUpperCase() : 'DESC';
+    const search = req.query.search || '';
+    const category = req.query.category || '';
+
+    const limit = size;
     const offset = (page - 1) * limit;
+
+    if (isNaN(page) || isNaN(size) || !['ASC', 'DESC'].includes(order)) {
+      return res.error(400, 'Invalid query parameters');
+    }
 
     const where = { stock: { [Op.gt]: 0 } };
     if (search) {
@@ -25,19 +28,34 @@ const getAll = async (req, res) => {
       const categoryInstance = await Category.findOne({
         where: { name: category },
       });
-      if (categoryInstance) where.categoryId = categoryInstance.id;
+      if (categoryInstance) {
+        where.categoryId = categoryInstance.id;
+      } else {
+        return res.error(404, 'Category not found');
+      }
     }
 
-    const products = await Product.findAll({
+    const { count, rows } = await Product.findAndCountAll({
       where,
       include,
       order: [[sort, order.toUpperCase()]],
       offset,
       limit,
       attributes: ['id', 'name', 'price'],
+      raw: true,
     });
 
-    res.success(200, products, 'Get all products success');
+    const totalPages = Math.ceil(count / limit);
+    if (page > totalPages) return res.error(404, 'Page not found');
+
+    const pagination = {
+      currentPage: page,
+      totalPages,
+      hasNextPage: page < totalPages,
+      hasPrevPage: page > 1,
+    };
+
+    res.success(200, rows, 'Get all products success', pagination);
   } catch (error) {
     res.error(500, error.message, 'internal server error');
   }
