@@ -3,7 +3,7 @@ const sequelize = require('../config/database');
 
 const Order = sequelize.define('Order', {
   totalPrice: {
-    type: DataTypes.INTEGER,
+    type: DataTypes.FLOAT,
     allowNull: false,
   },
   status: {
