@@ -1,6 +1,5 @@
 const { DataTypes } = require('sequelize');
 const sequelize = require('../config/database');
-const User = require('./user');
 
 const Order = sequelize.define('Order', {
   totalPrice: {
@@ -22,7 +21,5 @@ const Order = sequelize.define('Order', {
     allowNull: false,
   },
 });
-
-Order.belongsTo(User, { foreignKey: 'userId' });
 
 module.exports = Order;
