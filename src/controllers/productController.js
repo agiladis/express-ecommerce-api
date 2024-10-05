@@ -23,7 +23,6 @@ const getAll = async (req, res) => {
       where.name = { [Op.like]: `%${search}%` };
     }
 
-    const include = [];
     if (category) {
       const categoryInstance = await Category.findOne({
         where: { name: category },
@@ -37,7 +36,6 @@ const getAll = async (req, res) => {
 
     const { count, rows } = await Product.findAndCountAll({
       where,
-      include,
       order: [[sort, order.toUpperCase()]],
       offset,
       limit,
