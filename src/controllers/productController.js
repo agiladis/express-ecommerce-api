@@ -2,7 +2,6 @@ const { Op, fn, col } = require('sequelize');
 const Product = require('../entities/product');
 const Category = require('../entities/category');
 const Review = require('../entities/review');
-const sequelize = require('../config/database');
 
 const getAll = async (req, res) => {
   try {
@@ -90,15 +89,19 @@ const getById = async (req, res) => {
 
     if (!product) return res.error(404, 'product was not found');
 
-    const avgRating = await Review.findOne({
+    const review = await Review.findOne({
       where: { productId: id },
-      attributes: [[fn('AVG', col('rating')), 'avgRating']],
+      attributes: [
+        [fn('AVG', col('rating')), 'avgRating'],
+        [fn('COUNT', col('id')), 'totalReviewer'],
+      ],
       raw: true,
     });
 
     const productDetails = {
       ...product.toJSON(),
-      avgRating: avgRating.avgRating,
+      avgRating: review.avgRating,
+      totalReviewer: review.totalReviewer,
     };
 
     res.success(200, productDetails);
