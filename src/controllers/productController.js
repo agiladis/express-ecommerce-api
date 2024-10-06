@@ -1,6 +1,8 @@
-const { Op } = require('sequelize');
+const { Op, fn, col } = require('sequelize');
 const Product = require('../entities/product');
 const Category = require('../entities/category');
+const Review = require('../entities/review');
+const sequelize = require('../config/database');
 
 const getAll = async (req, res) => {
   try {
@@ -23,7 +25,6 @@ const getAll = async (req, res) => {
       where.name = { [Op.like]: `%${search}%` };
     }
 
-    const include = [];
     if (category) {
       const categoryInstance = await Category.findOne({
         where: { name: category },
@@ -37,7 +38,6 @@ const getAll = async (req, res) => {
 
     const { count, rows } = await Product.findAndCountAll({
       where,
-      include,
       order: [[sort, order.toUpperCase()]],
       offset,
       limit,
@@ -70,17 +70,38 @@ const getById = async (req, res) => {
     const product = await Product.findOne({
       where: {
         id,
+        isAvail: true,
         stock: { [Op.gt]: 0 },
       },
-      include: {
-        model: Category,
-        attributes: ['name'],
-      },
-      attributes: ['id', 'name', 'price', 'description', 'stock'],
+      include: [
+        {
+          model: Category,
+          attributes: ['name'],
+        },
+        {
+          model: Review,
+          limit: 2,
+          order: [['updated_at', 'DESC']],
+          attributes: ['id', 'comment', 'rating', 'created_at'],
+        },
+      ],
+      attributes: ['id', 'imageUrl', 'name', 'price', 'description', 'stock'],
     });
+
     if (!product) return res.error(404, 'product was not found');
 
-    res.success(200, product);
+    const avgRating = await Review.findOne({
+      where: { productId: id },
+      attributes: [[fn('AVG', col('rating')), 'avgRating']],
+      raw: true,
+    });
+
+    const productDetails = {
+      ...product.toJSON(),
+      avgRating: avgRating.avgRating,
+    };
+
+    res.success(200, productDetails);
   } catch (error) {
     res.error(500, error.message, 'internal server error');
   }
