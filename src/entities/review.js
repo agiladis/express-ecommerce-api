@@ -7,8 +7,12 @@ const Review = sequelize.define('Review', {
     allowNull: false,
   },
   rating: {
-    type: DataTypes.FLOAT,
+    type: DataTypes.INTEGER,
     allowNull: false,
+    validate: {
+      min: 1,
+      max: 5,
+    },
   },
 });
 
