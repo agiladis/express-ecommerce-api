@@ -44,8 +44,15 @@ const getAll = async (req, res) => {
       raw: true,
     });
 
+    if (rows.length == 0 && count == 0) {
+      return res.success(200, rows, 'No products found');
+    }
+
     const totalPages = Math.ceil(count / limit);
-    if (page > totalPages) return res.error(404, 'Page not found');
+
+    if (page > totalPages) {
+      return res.error(404, 'Page not found');
+    }
 
     const pagination = {
       currentPage: page,
