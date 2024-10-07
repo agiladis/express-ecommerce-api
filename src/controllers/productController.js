@@ -2,20 +2,20 @@ const { Op, fn, col } = require('sequelize');
 const Product = require('../entities/product');
 const Category = require('../entities/category');
 const Review = require('../entities/review');
+const User = require('../entities/user');
 
 const getAll = async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1;
-    const size = parseInt(req.query.size) || 5;
+    const limit = parseInt(req.query.limit) || 5;
     const sort = req.query.sort || 'createdAt';
     const order = req.query.order ? req.query.order.toUpperCase() : 'DESC';
     const search = req.query.search || '';
     const category = req.query.category || '';
 
-    const limit = size;
     const offset = (page - 1) * limit;
 
-    if (isNaN(page) || isNaN(size) || !['ASC', 'DESC'].includes(order)) {
+    if (isNaN(page) || isNaN(limit) || !['ASC', 'DESC'].includes(order)) {
       return res.error(400, 'Invalid query parameters');
     }
 
@@ -40,12 +40,19 @@ const getAll = async (req, res) => {
       order: [[sort, order.toUpperCase()]],
       offset,
       limit,
-      attributes: ['id', 'name', 'price'],
+      attributes: ['id', 'imageUrl', 'name', 'price'],
       raw: true,
     });
 
+    if (rows.length == 0 && count == 0) {
+      return res.success(200, rows, 'No products found');
+    }
+
     const totalPages = Math.ceil(count / limit);
-    if (page > totalPages) return res.error(404, 'Page not found');
+
+    if (page > totalPages) {
+      return res.error(404, 'Page not found');
+    }
 
     const pagination = {
       currentPage: page,
@@ -98,10 +105,13 @@ const getById = async (req, res) => {
       raw: true,
     });
 
+    const avgRating = parseFloat(review.avgRating);
+    const totalReviewer = parseInt(review.totalReviewer, 10);
+
     const productDetails = {
       ...product.toJSON(),
-      avgRating: review.avgRating,
-      totalReviewer: review.totalReviewer,
+      avgRating,
+      totalReviewer,
     };
 
     res.success(200, productDetails);
@@ -110,4 +120,49 @@ const getById = async (req, res) => {
   }
 };
 
-module.exports = { getAll, getById };
+const getAllReviews = async (req, res) => {
+  const { productId } = req.params;
+
+  try {
+    if (!productId) return res.error(400, 'Product ID is require');
+    if (isNaN(Number(productId)))
+      return res.error(422, 'Params must be number');
+
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const sort = req.query.sort || 'updatedAt';
+    const order = req.query.order ? req.query.order.toUpperCase() : 'DESC';
+    const offset = (page - 1) * limit;
+
+    const { count, rows } = await Review.findAndCountAll({
+      where: { productId },
+      order: [[sort, order]],
+      offset,
+      limit,
+      attributes: ['id', 'comment', 'rating', 'updated_at'],
+      include: {
+        model: User,
+        attributes: ['email'],
+      },
+    });
+    if (rows.length == 0) return res.error(200, rows, 'No reviews found');
+
+    const totalPages = Math.ceil(count / limit);
+    if (page > totalPages) {
+      return res.error(404, 'Page not found');
+    }
+
+    const pagination = {
+      currentPage: page,
+      totalPages,
+      hasNextPage: page < totalPages,
+      hasPrevPage: page > 1,
+    };
+
+    res.success(200, rows, 'Get all reviews success', pagination);
+  } catch (error) {
+    res.error(500, error.message, 'internal server error');
+  }
+};
+
+module.exports = { getAll, getById, getAllReviews };
