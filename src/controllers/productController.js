@@ -122,23 +122,45 @@ const getById = async (req, res) => {
 };
 
 const getAllReviews = async (req, res) => {
-  const productId = req.params.productId;
+  const { productId } = req.params;
 
   try {
+    if (!productId) return res.error(400, 'Product ID is require');
     if (isNaN(Number(productId)))
-      return res.error(422, 'params must be number');
+      return res.error(422, 'Params must be number');
 
-    const reviews = await Review.findAll({
-      where: { productId: productId },
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const sort = req.query.sort || 'updatedAt';
+    const order = req.query.order ? req.query.order.toUpperCase() : 'DESC';
+    const offset = (page - 1) * limit;
+
+    const { count, rows } = await Review.findAndCountAll({
+      where: { productId },
+      order: [[sort, order]],
+      offset,
+      limit,
       attributes: ['id', 'comment', 'rating', 'updated_at'],
       include: {
         model: User,
         attributes: ['email'],
       },
     });
-    if (reviews.length == 0) return res.error(200, reviews, 'review is empty');
+    if (rows.length == 0) return res.error(200, rows, 'No reviews found');
 
-    res.success(200, reviews);
+    const totalPages = Math.ceil(count / limit);
+    if (page > totalPages) {
+      return res.error(404, 'Page not found');
+    }
+
+    const pagination = {
+      currentPage: page,
+      totalPages,
+      hasNextPage: page < totalPages,
+      hasPrevPage: page > 1,
+    };
+
+    res.success(200, rows, 'Get all reviews success', pagination);
   } catch (error) {
     res.error(500, error.message, 'internal server error');
   }
