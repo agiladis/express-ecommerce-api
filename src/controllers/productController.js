@@ -7,16 +7,15 @@ const User = require('../entities/user');
 const getAll = async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1;
-    const size = parseInt(req.query.size) || 5;
+    const limit = parseInt(req.query.limit) || 5;
     const sort = req.query.sort || 'createdAt';
     const order = req.query.order ? req.query.order.toUpperCase() : 'DESC';
     const search = req.query.search || '';
     const category = req.query.category || '';
 
-    const limit = size;
     const offset = (page - 1) * limit;
 
-    if (isNaN(page) || isNaN(size) || !['ASC', 'DESC'].includes(order)) {
+    if (isNaN(page) || isNaN(limit) || !['ASC', 'DESC'].includes(order)) {
       return res.error(400, 'Invalid query parameters');
     }
 
