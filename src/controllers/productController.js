@@ -2,6 +2,7 @@ const { Op, fn, col } = require('sequelize');
 const Product = require('../entities/product');
 const Category = require('../entities/category');
 const Review = require('../entities/review');
+const User = require('../entities/user');
 
 const getAll = async (req, res) => {
   try {
@@ -105,10 +106,13 @@ const getById = async (req, res) => {
       raw: true,
     });
 
+    const avgRating = parseFloat(review.avgRating);
+    const totalReviewer = parseInt(review.totalReviewer, 10);
+
     const productDetails = {
       ...product.toJSON(),
-      avgRating: review.avgRating,
-      totalReviewer: review.totalReviewer,
+      avgRating,
+      totalReviewer,
     };
 
     res.success(200, productDetails);
@@ -117,4 +121,27 @@ const getById = async (req, res) => {
   }
 };
 
-module.exports = { getAll, getById };
+const getAllReviews = async (req, res) => {
+  const productId = req.params.productId;
+
+  try {
+    if (isNaN(Number(productId)))
+      return res.error(422, 'params must be number');
+
+    const reviews = await Review.findAll({
+      where: { productId: productId },
+      attributes: ['id', 'comment', 'rating', 'updated_at'],
+      include: {
+        model: User,
+        attributes: ['email'],
+      },
+    });
+    if (reviews.length == 0) return res.error(200, reviews, 'review is empty');
+
+    res.success(200, reviews);
+  } catch (error) {
+    res.error(500, error.message, 'internal server error');
+  }
+};
+
+module.exports = { getAll, getById, getAllReviews };
