@@ -41,7 +41,7 @@ const getAll = async (req, res) => {
       order: [[sort, order.toUpperCase()]],
       offset,
       limit,
-      attributes: ['id', 'name', 'price'],
+      attributes: ['id', 'imageUrl', 'name', 'price'],
       raw: true,
     });
 
