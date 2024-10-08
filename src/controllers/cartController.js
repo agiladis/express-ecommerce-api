@@ -49,19 +49,7 @@ const addToCart = async (req, res) => {
 };
 
 const getAllProductFromCart = async (req, res) => {
-  // const userId = req.user.id;
-
   try {
-    // const cartProducts = await Cart.findAll({
-    //   where: { userId },
-    //   include: {
-    //     model: Product,
-    //     attributes: ['id', 'name', 'price'],
-    //   },
-    //   attributes: ['quantity'],
-    // });
-    // if (!cartProducts) return res.error(404, 'Cart is empty');
-
     res.success(200, req.cartItems, 'Get all products from cart success');
   } catch (error) {
     res.error(500, error.message, 'internal server error');
