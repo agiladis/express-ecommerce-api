@@ -1,19 +1,25 @@
 const Cart = require('../entities/cart');
+const CartItem = require('../entities/cartItem');
 const Product = require('../entities/product');
 
 const validateCartStock = async (req, res, next) => {
   const userId = req.user.id;
 
   try {
-    const cartItems = await Cart.findAll({
-      where: { userId },
+    const cart = await Cart.findOne({ where: { userId } });
+    if (cart.isEmpty) return res.success(200, [], 'Cart is empty');
+
+    const cartItems = await CartItem.findAll({
+      where: { cartId: cart.id },
       attributes: ['id', 'quantity'],
-      include: { model: Product, attributes: ['id', 'name', 'price'] },
+      include: {
+        model: Product,
+        attributes: ['id', 'name', 'imageUrl', 'price', 'stock', 'isAvail'],
+      },
     });
-    if (!cartItems) return res.error(404, 'Cart is empty');
 
     const updatedCartItems = cartItems.map((item) => {
-      if (!item.Product || item.Product.stock == 0) {
+      if (!item.Product || item.Product.stock == 0 || !item.Product.isAvail) {
         return {
           ...item.toJSON(),
           stockStatus: 'Product not available',
