@@ -103,7 +103,7 @@ const createOrder = async (req, res) => {
       );
     }
 
-    // delete prodcut from cart
+    // delete product from cart
     await Cart.destroy({
       where: { id: { [Op.in]: items }, userId },
       transaction: t,

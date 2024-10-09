@@ -57,16 +57,32 @@ const getAllProductFromCart = async (req, res) => {
 };
 
 const updateCartProduct = async (req, res) => {
-  const updates = req.body;
-  const cartProduct = req.cart;
+  const { quantity } = req.body;
+  const cartItem = req.cartItem;
 
   try {
-    Object.keys(updates).forEach((key) => {
-      cartProduct[key] = updates[key];
-    });
+    if (quantity === 0) {
+      await CartItem.destroy({
+        where: {
+          id: cartItem.id,
+        },
+      });
 
-    await cartProduct.save();
-    res.success(200, cartProduct, 'Update cart product success');
+      return res.success(204, cartItem, 'Update cart product success');
+    }
+
+    if (!quantity || quantity < 0)
+      return res.error(400, 'Quantity must be a positive number');
+
+    const product = await Product.findByPk(cartItem.productId);
+    if (!product || !product.isAvail)
+      return res.error(404, 'Product not found');
+
+    if (quantity > product.stock)
+      return res.error(404, 'Insufficient stock available');
+
+    await cartItem.save();
+    res.success(204, cartItem, 'Update cart product success');
   } catch (error) {
     res.error(500, error.message, 'internal server error');
   }
