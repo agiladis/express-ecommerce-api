@@ -7,7 +7,7 @@ const validateCartStock = async (req, res, next) => {
 
   try {
     const cart = await Cart.findOne({ where: { userId } });
-    if (cart.isEmpty) return res.success(200, [], 'Cart is empty');
+    if (!cart) return res.success(200, [], 'Cart is empty');
 
     const cartItems = await CartItem.findAll({
       where: { cartId: cart.id },
@@ -18,21 +18,15 @@ const validateCartStock = async (req, res, next) => {
       },
     });
 
-    const updatedCartItems = cartItems.map((item) => {
-      if (!item.Product || item.Product.stock == 0 || !item.Product.isAvail) {
-        return {
-          ...item.toJSON(),
-          stockStatus: 'Product not available',
-        };
-      }
+    const products = cartItems.map((item) => ({
+      ...item.toJSON(),
+      stockStatus:
+        item.Product && item.Product.stock > 0 && item.Product.isAvail
+          ? 'Available'
+          : 'Product not available',
+    }));
 
-      return {
-        ...item.toJSON(),
-        stockStatus: 'Available',
-      };
-    });
-
-    req.cartItems = updatedCartItems;
+    req.cartItems = products;
     next();
   } catch (error) {
     res.error(500, error.message, 'internal server error');
