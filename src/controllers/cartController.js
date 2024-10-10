@@ -81,7 +81,9 @@ const updateCartProduct = async (req, res) => {
     if (quantity > product.stock)
       return res.error(404, 'Insufficient stock available');
 
+    cartItem.quantity = quantity;
     await cartItem.save();
+
     res.success(204, cartItem, 'Update cart product success');
   } catch (error) {
     res.error(500, error.message, 'internal server error');

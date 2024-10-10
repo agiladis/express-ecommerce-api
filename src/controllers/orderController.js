@@ -1,9 +1,10 @@
-const { Op, Transaction } = require('sequelize');
+const { Op, where } = require('sequelize');
 const sequelize = require('../config/database');
 const Cart = require('../entities/cart');
 const Product = require('../entities/product');
 const Order = require('../entities/order');
 const OrderItem = require('../entities/orderItem');
+const CartItem = require('../entities/cartItem');
 
 const getAllOrders = async (req, res) => {
   const userId = req.user.id;
@@ -53,45 +54,45 @@ const getOrderById = async (req, res) => {
 
 const createOrder = async (req, res) => {
   const userId = req.user.id;
-  const items = req.body.items;
+  const cartItemsId = req.body.items;
 
-  const t = await sequelize.transaction();
+  const transaction = await sequelize.transaction();
 
   try {
-    const cartProduct = await Cart.findAll({
-      where: { id: { [Op.in]: items }, userId },
-      include: [Product],
-      transaction: t,
+    const cart = await Cart.findOne({
+      where: { userId },
+      include: [
+        {
+          model: CartItem,
+          where: { id: { [Op.in]: cartItemsId } },
+          include: [Product], // Include product data for stock checking
+        },
+      ],
+      transaction,
     });
-    if (!cartProduct.length)
-      return res.error(404, 'bad request', 'Product not found');
+
+    if (!cart || cart.CartItems.length === 0)
+      return res.error(404, 'Cart is empty or no valid cart items found');
 
     let totalPrice = 0;
-    for (const item of cartProduct) {
-      const product = await Product.findByPk(item.Product.id, {
-        transaction: t,
-      });
-      if (!product)
-        throw new Error(`Product with id ${item.Product.id} not found`);
-      if (product.stock < item.quantity)
-        throw new Error(`Insufficient stock for product ${product.name}`);
+    for (let item of cart.CartItems) {
+      const product = item.Product;
 
-      totalPrice += item.Product.price * item.quantity;
+      if (product.stock < item.quantity) {
+        throw new Error(`Insufficient stock for product ${product.name}`);
+      }
+
+      totalPrice += product.price * item.quantity;
     }
 
     // create order
-    const order = await Order.create(
-      { userId, totalPrice },
-      { transaction: t }
-    );
+    const order = await Order.create({ userId, totalPrice }, { transaction });
 
     // save order items and reduce stock of product
-    for (const item of cartProduct) {
-      const product = await Product.findByPk(item.Product.id, {
-        transaction: t,
-      });
+    for (let item of cart.CartItems) {
+      const product = await Product.findByPk(item.Product.id, { transaction });
       product.stock -= item.quantity;
-      await product.save({ transaction: t });
+      await product.save({ transaction });
 
       await OrderItem.create(
         {
@@ -99,22 +100,23 @@ const createOrder = async (req, res) => {
           productId: item.Product.id,
           quantity: item.quantity,
         },
-        { transaction: t }
+        { transaction }
       );
     }
 
-    // delete product from cart
-    await Cart.destroy({
-      where: { id: { [Op.in]: items }, userId },
-      transaction: t,
+    // delete product from cart item
+    await CartItem.destroy({
+      where: { id: { [Op.in]: cartItemsId }, cartId: cart.id },
+      transaction,
     });
 
     // commit transaction
-    await t.commit();
+    await transaction.commit();
+
     res.success(201, order, 'Order created successfully');
   } catch (error) {
-    await t.rollback();
-    res.error(400, error.message, 'Error registering user');
+    await transaction.rollback();
+    res.error(400, error.message, 'Error create order');
   }
 };
 
