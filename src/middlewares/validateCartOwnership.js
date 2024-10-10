@@ -12,11 +12,12 @@ const validateCartOwnership = async (req, res, next) => {
         where: { userId },
       },
     });
-    if (!cartItem)
+    if (!cartItem) {
       return res.error(
         404,
         'Cart item not found or does not belong to the user'
       );
+    }
 
     req.cartItem = cartItem;
     next();
