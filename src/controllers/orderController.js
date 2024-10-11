@@ -10,14 +10,31 @@ const getAllOrders = async (req, res) => {
   const userId = req.user.id;
 
   try {
-    const orders = await Order.findAndCountAll({
-      where: { userId },
-      limit: 10,
-      offset: 0,
-    });
-    if (!orders) return res.error(404, "You don't have any transactions yet");
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const sort = req.query.sort || 'createdAt';
+    const order = req.query.order ? req.query.order.toUpperCase() : 'DESC';
+    const offset = (page - 1) * limit;
 
-    res.success(200, orders, 'Get all transactions success');
+    const { count, rows } = await Order.findAndCountAll({
+      where: { userId },
+      limit,
+      offset,
+      order: [[sort, order]],
+    });
+    if (!rows) return res.error(404, "You don't have any transactions yet");
+
+    const totalPages = Math.ceil(count / limit);
+    if (page > totalPages) return res.error(404, 'Page not found');
+
+    const pagination = {
+      currentPage: page,
+      totalPages,
+      hasNextPage: page < totalPages,
+      hasPrevPage: page > 1,
+    };
+
+    res.success(200, rows, 'Get all transactions success', pagination);
   } catch (error) {
     res.error(500, error.message, 'internal server error');
   }
@@ -35,12 +52,13 @@ const getOrderById = async (req, res) => {
         id,
         userId,
       },
+      attributes: ['id', 'totalPrice', 'status', 'createdAt', 'updatedAt'],
       include: {
         model: OrderItem,
-        attributes: ['id', 'productId', 'quantity'],
+        attributes: ['quantity'],
         include: {
           model: Product,
-          attributes: ['name', 'price'],
+          attributes: ['name', 'imageUrl', 'price'],
         },
       },
     });
