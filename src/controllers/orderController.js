@@ -52,12 +52,13 @@ const getOrderById = async (req, res) => {
         id,
         userId,
       },
+      attributes: ['id', 'totalPrice', 'status', 'createdAt', 'updatedAt'],
       include: {
         model: OrderItem,
-        attributes: ['id', 'productId', 'quantity'],
+        attributes: ['quantity'],
         include: {
           model: Product,
-          attributes: ['name', 'price'],
+          attributes: ['name', 'imageUrl', 'price'],
         },
       },
     });
