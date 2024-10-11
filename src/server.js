@@ -1,11 +1,5 @@
 const sequelize = require('./config/database');
 const app = require('./app');
-const User = require('./entities/user');
-const Product = require('./entities/product');
-const Category = require('./entities/category');
-const Order = require('./entities/order');
-const OrderItem = require('./entities/orderItem');
-const Cart = require('./entities/cart');
 
 const PORT = process.env.PORT || 3000;
 

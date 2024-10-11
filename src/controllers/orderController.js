@@ -1,22 +1,40 @@
-const { Op, Transaction } = require('sequelize');
+const { Op, where } = require('sequelize');
 const sequelize = require('../config/database');
 const Cart = require('../entities/cart');
 const Product = require('../entities/product');
 const Order = require('../entities/order');
 const OrderItem = require('../entities/orderItem');
+const CartItem = require('../entities/cartItem');
 
 const getAllOrders = async (req, res) => {
   const userId = req.user.id;
 
   try {
-    const orders = await Order.findAndCountAll({
-      where: { userId },
-      limit: 10,
-      offset: 0,
-    });
-    if (!orders) return res.error(404, "You don't have any transactions yet");
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const sort = req.query.sort || 'createdAt';
+    const order = req.query.order ? req.query.order.toUpperCase() : 'DESC';
+    const offset = (page - 1) * limit;
 
-    res.success(200, orders, 'Get all transactions success');
+    const { count, rows } = await Order.findAndCountAll({
+      where: { userId },
+      limit,
+      offset,
+      order: [[sort, order]],
+    });
+    if (!rows) return res.error(404, "You don't have any transactions yet");
+
+    const totalPages = Math.ceil(count / limit);
+    if (page > totalPages) return res.error(404, 'Page not found');
+
+    const pagination = {
+      currentPage: page,
+      totalPages,
+      hasNextPage: page < totalPages,
+      hasPrevPage: page > 1,
+    };
+
+    res.success(200, rows, 'Get all transactions success', pagination);
   } catch (error) {
     res.error(500, error.message, 'internal server error');
   }
@@ -34,12 +52,13 @@ const getOrderById = async (req, res) => {
         id,
         userId,
       },
+      attributes: ['id', 'totalPrice', 'status', 'createdAt', 'updatedAt'],
       include: {
         model: OrderItem,
-        attributes: ['id', 'productId', 'quantity'],
+        attributes: ['quantity'],
         include: {
           model: Product,
-          attributes: ['name', 'price'],
+          attributes: ['name', 'imageUrl', 'price'],
         },
       },
     });
@@ -53,45 +72,45 @@ const getOrderById = async (req, res) => {
 
 const createOrder = async (req, res) => {
   const userId = req.user.id;
-  const items = req.body.items;
+  const cartItemsId = req.body.items;
 
-  const t = await sequelize.transaction();
+  const transaction = await sequelize.transaction();
 
   try {
-    const cartProduct = await Cart.findAll({
-      where: { id: { [Op.in]: items }, userId },
-      include: [Product],
-      transaction: t,
+    const cart = await Cart.findOne({
+      where: { userId },
+      include: [
+        {
+          model: CartItem,
+          where: { id: { [Op.in]: cartItemsId } },
+          include: [Product], // Include product data for stock checking
+        },
+      ],
+      transaction,
     });
-    if (!cartProduct.length)
-      return res.error(404, 'bad request', 'Product not found');
+
+    if (!cart || cart.CartItems.length === 0)
+      return res.error(404, 'Cart is empty or no valid cart items found');
 
     let totalPrice = 0;
-    for (const item of cartProduct) {
-      const product = await Product.findByPk(item.Product.id, {
-        transaction: t,
-      });
-      if (!product)
-        throw new Error(`Product with id ${item.Product.id} not found`);
-      if (product.stock < item.quantity)
-        throw new Error(`Insufficient stock for product ${product.name}`);
+    for (let item of cart.CartItems) {
+      const product = item.Product;
 
-      totalPrice += item.Product.price * item.quantity;
+      if (product.stock < item.quantity) {
+        throw new Error(`Insufficient stock for product ${product.name}`);
+      }
+
+      totalPrice += product.price * item.quantity;
     }
 
     // create order
-    const order = await Order.create(
-      { userId, totalPrice },
-      { transaction: t }
-    );
+    const order = await Order.create({ userId, totalPrice }, { transaction });
 
     // save order items and reduce stock of product
-    for (const item of cartProduct) {
-      const product = await Product.findByPk(item.Product.id, {
-        transaction: t,
-      });
+    for (let item of cart.CartItems) {
+      const product = await Product.findByPk(item.Product.id, { transaction });
       product.stock -= item.quantity;
-      await product.save({ transaction: t });
+      await product.save({ transaction });
 
       await OrderItem.create(
         {
@@ -99,22 +118,23 @@ const createOrder = async (req, res) => {
           productId: item.Product.id,
           quantity: item.quantity,
         },
-        { transaction: t }
+        { transaction }
       );
     }
 
-    // delete prodcut from cart
-    await Cart.destroy({
-      where: { id: { [Op.in]: items }, userId },
-      transaction: t,
+    // delete product from cart item
+    await CartItem.destroy({
+      where: { id: { [Op.in]: cartItemsId }, cartId: cart.id },
+      transaction,
     });
 
     // commit transaction
-    await t.commit();
+    await transaction.commit();
+
     res.success(201, order, 'Order created successfully');
   } catch (error) {
-    await t.rollback();
-    res.error(400, error.message, 'Error registering user');
+    await transaction.rollback();
+    res.error(400, error.message, 'Error create order');
   }
 };
 
