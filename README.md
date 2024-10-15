@@ -9,12 +9,15 @@ Proyek ini adalah backend untuk platform e-commerce sederhana yang memungkinkan 
 1. **Fitur Autentikasi**
 
    - Registrasi pengguna baru
+   - Validasi email dengan token
+   - Meminta token validasi email yang baru
    - Login pengguna yang aman
 
 2. **Manajemen Produk**
 
    - Menampilkan daftar produk dengan pencarian, pengurutan, dan filter
    - Menampilkan detail produk
+   - Menampilkan daftar review produk
    - Menambahkan produk ke keranjang
 
 3. **Keranjang Belanja**
@@ -23,7 +26,7 @@ Proyek ini adalah backend untuk platform e-commerce sederhana yang memungkinkan 
    - Memperbarui produk di dalam keranjang
 
 4. **Proses Pemesanan**
-   - Membuat pesanan dari item di keranjang
+   - Membuat pesanan dari item dalam keranjang
    - Menampilkan riwayat dan detail pesanan pengguna
 
 ## Endpoint
@@ -31,12 +34,15 @@ Proyek ini adalah backend untuk platform e-commerce sederhana yang memungkinkan 
 ### Autentikasi
 
 - **POST /api/v1/auth/register**: Mendaftarkan pengguna baru.
+- **GET /api/v1/activate/:token**: Aktivasi akun dengan token yang dikirim melalui email.
+- **POST /api/v1/reactivate**: Meminta token baru aktivasi akun.
 - **POST /api/v1/auth/login**: Melakukan login pengguna.
 
 ### Manajemen Produk
 
 - **GET /api/v1/products**: Mendapatkan daftar semua produk (dengan pagination, filter, dan sorting).
 - **GET /api/v1/products/:id**: Mendapatkan detail produk berdasarkan ID.
+- **GET /api/v1/products/review/:productId**: Mendapatkan daftar semua review untuk produk terkait berdasarkan ID produk.
 
 ### Keranjang Belanja
 
@@ -53,7 +59,7 @@ Proyek ini adalah backend untuk platform e-commerce sederhana yang memungkinkan 
 
 ## Penggunaan
 
-Anda dapat menggunakan `Collections` dan `Environment` _postman_ yang tersedia pada folder `document`. ERD juga tersedia pada folder tersebut.
+Anda dapat menggunakan `Collections` dan `Environment` _postman_ yang tersedia pada folder `document`.
 
 ## Setup
 
@@ -86,5 +92,6 @@ Anda dapat menggunakan `Collections` dan `Environment` _postman_ yang tersedia p
 - Express.js
 - Sequelize ORM
 - MySQL
-- jsonwebtoken
-- bcrypt
+- Jsonwebtoken
+- Bcrypt
+- NodeMailer
